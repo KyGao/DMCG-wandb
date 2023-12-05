@@ -490,6 +490,8 @@ class GNN(nn.Module):
 
         mean = extra_output["latent_mean"]
         log_std = extra_output["latent_logstd"]
+        loss_dict["z_mean"] = mean.mean()
+        loss_dict["z_logstd"] = log_std.mean()
         kld = -0.5 * torch.sum(1 + 2 * log_std - mean.pow(2) - torch.exp(2 * log_std), dim=-1)
         kld = kld.mean()
         loss = loss + kld * args.vae_beta

@@ -23,6 +23,8 @@ import json
 from collections import defaultdict
 from torch.utils.data import DistributedSampler
 
+import wandb
+
 
 def train(model, device, loader, optimizer, scheduler, args):
     model.train()
@@ -43,6 +45,10 @@ def train(model, device, loader, optimizer, scheduler, args):
                 )
             else:
                 loss, loss_dict = model.compute_loss(atom_pred_list, extra_output, batch, args)
+                
+            prefixed_dict = {f'train_inner/{key}': value for key, value in loss_dict.items()}
+            wandb.log(prefixed_dict)
+
 
             loss.backward()
             if args.grad_norm is not None:
@@ -91,9 +97,10 @@ def evaluate(model, device, loader, args):
         try:
             rmsd_list.append(get_best_rmsd(gen_mol, ref_mol))
         except Exception as e:
+            print(e)
             continue
 
-    return np.mean(rmsd_list)
+    return np.mean(rmsd_list), (np.array(rmsd_list)<2.0).sum()/len(rmsd_list)
 
 
 def main():
@@ -168,6 +175,14 @@ def main():
     parser.add_argument("--no-3drot", action="store_true", default=False)
 
     args = parser.parse_args()
+    
+    wandb.init(
+        project="dmcg-1205",
+        name="drugs_reproduce_1",
+        group="drugs_reproduce_1",
+        id="drugs_reproduce_1",
+        config=args
+    )
 
     init_distributed_mode(args)
     print(args)
@@ -226,6 +241,11 @@ def main():
         shuffle=False,
         num_workers=args.num_workers,
     )
+    print("Train size: ", len(train_loader))
+    print("Train size dev: ", len(train_loader_dev))
+    print("Valid size: ", len(valid_loader))
+    print("Test size: ", len(test_loader))
+    
 
     shared_params = {
         "mlp_hidden_size": args.mlp_hidden_size,
@@ -309,11 +329,16 @@ def main():
         CosineBeta.step(epoch - 1)
         print("=====Epoch {}".format(epoch))
         print("Training...")
-        loss_dict = train(model, device, train_loader, optimizer, scheduler, args)
-        print("Evaluating...")
-        train_pref = evaluate(model, device, train_loader_dev, args)
-        valid_pref = evaluate(model, device, valid_loader, args)
-        test_pref = evaluate(model, device, test_loader, args)
+        # loss_dict = train(model, device, train_loader, optimizer, scheduler, args)
+        # prefixed_dict = {f'train/{key}': value for key, value in loss_dict.items()}
+        # wandb.log(prefixed_dict)
+        # print("Evaluating...")
+        # train_pref, rmsd_2A = evaluate(model, device, train_loader_dev, args)
+        # wandb.log({"train/rmsd": train_pref, "train/rmsd_2A": rmsd_2A})
+        # valid_pref, rmsd_2A = evaluate(model, device, valid_loader, args)
+        # wandb.log({"valid/rmsd": valid_pref, "valid/rmsd_2A": rmsd_2A})
+        test_pref, rmsd_2A = evaluate(model, device, test_loader, args)
+        wandb.log({"test/rmsd": test_pref, "test/rmsd_2A": rmsd_2A})
 
         if args.checkpoint_dir:
             print(f"Setting {os.path.basename(os.path.normpath(args.checkpoint_dir))}...")

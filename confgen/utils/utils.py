@@ -1,6 +1,6 @@
 import math
 import copy
-from rdkit.Chem.rdmolops import RemoveHs
+from rdkit.Chem import RemoveHs
 from rdkit.Chem import rdMolAlign as MA
 import torch
 import os

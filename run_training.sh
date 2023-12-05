@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 SUFFIX=$(echo ${POSITIONAL[*]} | sed -r 's/-//g' | sed -r 's/\s+/-/g')
-SAVEDIR=/model/confgen/vae/$prefix
+SAVEDIR=./model/confgen/vae/$prefix
 if [ -n "$SUFFIX" ]; then
     SAVEDIR=${SAVEDIR}-${SUFFIX}
 fi
