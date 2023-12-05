@@ -176,13 +176,13 @@ def main():
 
     args = parser.parse_args()
     
-    wandb.init(
-        project="dmcg-1205",
-        name="drugs_reproduce_1",
-        group="drugs_reproduce_1",
-        id="drugs_reproduce_1",
-        config=args
-    )
+    # wandb.init(
+    #     project="dmcg-1205",
+    #     name="drugs_reproduce_1",
+    #     group="drugs_reproduce_1",
+    #     id="drugs_reproduce_1",
+    #     config=args
+    # )
 
     init_distributed_mode(args)
     print(args)
