@@ -52,9 +52,11 @@ class GNN(nn.Module):
         rand_aug: bool = False,
         no_3drot: bool = False,
         not_origin: bool = False,
+        seed=0
     ):
         super().__init__()
 
+        self.seed = seed
         self.encoder_edge = MLP(
             sum(get_bond_feature_dims()),
             [mlp_hidden_size] * mlp_layers + [latent_size],
@@ -412,6 +414,8 @@ class GNN(nn.Module):
             else:
                 cycle = 1
             for _ in range(cycle):
+                # x.shape=[3888, 256]
+                # extended_x.shape=[3888, 256]
                 extended_x, extended_edge_attr = self.extend_x_edge(
                     cur_pos, x + z, edge_attr, edge_index
                 )
@@ -426,6 +430,7 @@ class GNN(nn.Module):
                     num_edges,
                 )
                 x = F.dropout(x_1, p=self.dropout, training=self.training) + x
+                torch.save(x, f'dmcg_logs/x_{i}_seed{self.seed}.pt')
                 edge_attr = (
                     F.dropout(edge_attr_1, p=self.dropout, training=self.training) + edge_attr
                 )
@@ -437,6 +442,7 @@ class GNN(nn.Module):
                     cur_pos = self.decoder_pos[i](x)
                     cur_pos = self.move2origin(cur_pos, batch)
                 cur_pos = self.random_augmentation(cur_pos, batch)
+                torch.save(cur_pos, f'dmcg_logs/cur_pos_{i}_seed{self.seed}.pt')
                 pos_list.append(cur_pos)
                 if self.sg_pos:
                     cur_pos = cur_pos.detach()

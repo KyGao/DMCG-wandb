@@ -82,6 +82,7 @@ def evaluate(model, device, loader, args):
         batch = batch.to(device)
         with torch.no_grad():
             pred, _ = model(batch, sample=True)
+        exit(0)
         pred = pred[-1]
         batch_size = batch.num_graphs
         n_nodes = batch.n_nodes.tolist()
@@ -95,6 +96,7 @@ def evaluate(model, device, loader, args):
 
         with torch.no_grad():
             pred, _ = model(batch, sample=True)
+            
         pred = pred[-1]
         batch_size = batch.num_graphs
         n_nodes = batch.n_nodes.tolist()
@@ -535,6 +537,7 @@ def main():
         "shared_decoder": args.shared_decoder,
         "sample_beta": args.sample_beta,
         "shared_output": args.shared_output,
+        "seed": args.seed,
     }
     model = GNN(**shared_params).to(device)
     if args.eval_from is not None:
